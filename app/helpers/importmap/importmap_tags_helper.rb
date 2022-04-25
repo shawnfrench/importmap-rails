@@ -1,9 +1,11 @@
 module Importmap::ImportmapTagsHelper
   # Setup all script tags needed to use an importmap-powered entrypoint (which defaults to application.js)
-  def javascript_importmap_tags(entry_point = "application", shim: true)
+  # Use `group` to filter the map pins for a named group
+  def javascript_importmap_tags(entry_point = "application", shim: true, group: nil)
+    importmap_json = Rails.application.importmap.to_json(resolver: self, group: group)
     safe_join [
-      javascript_inline_importmap_tag,
-      javascript_importmap_module_preload_tags,
+      javascript_inline_importmap_tag(importmap_json),
+      javascript_importmap_module_preload_tags(group: group),
       (javascript_importmap_shim_nonce_configuration_tag if shim),
       (javascript_importmap_shim_tag if shim),
       javascript_import_module_tag(entry_point)
@@ -41,8 +43,9 @@ module Importmap::ImportmapTagsHelper
   # Link tags for preloading all modules marked as preload: true in the `importmap`
   # (defaults to Rails.application.importmap), such that they'll be fetched
   # in advance by browsers supporting this link type (https://caniuse.com/?search=modulepreload).
-  def javascript_importmap_module_preload_tags(importmap = Rails.application.importmap)
-    javascript_module_preload_tag(*importmap.preloaded_module_paths(resolver: self))
+  # Use `group` to filter the map pins for a named group.
+  def javascript_importmap_module_preload_tags(importmap = Rails.application.importmap, group: nil)
+    javascript_module_preload_tag(*importmap.preloaded_module_paths(resolver: self, group: group))
   end
 
   # Link tag(s) for preloading the JavaScript module residing in `*paths`. Will return one link tag per path element.
